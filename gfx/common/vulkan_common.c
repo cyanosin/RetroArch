@@ -522,6 +522,7 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
 
 static const char *vulkan_device_extensions[]  = {
    "VK_KHR_swapchain",
+   "VK_EXT_full_screen_exclusive"
 };
 
 static const char *vulkan_optional_device_extensions[] = {
@@ -2279,12 +2280,28 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    if (old_swapchain != VK_NULL_HANDLE)
       vkDestroySwapchainKHR(vk->context.device, old_swapchain, NULL);
 
+#ifdef VK_EXT_full_screen_exclusive
+   VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
+       .sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
+       .pNext = NULL,
+       .fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT
+   };
+   info.pNext = &fs_info;
+#endif
+
    if (vkCreateSwapchainKHR(vk->context.device,
             &info, NULL, &vk->swapchain) != VK_SUCCESS)
    {
       RARCH_ERR("[Vulkan] Failed to create swapchain.\n");
       return false;
    }
+
+   /* Acquire exclusive fullscreen. */
+#ifdef VK_EXT_full_screen_exclusive
+   PFN_vkAcquireFullScreenExclusiveModeEXT vkAcquireFullScreenExclusiveModeEXT =
+      (PFN_vkAcquireFullScreenExclusiveModeEXT)
+      vkGetDeviceProcAddr(vk->context.device, "vkAcquireFullScreenExclusiveModeEXT");
+#endif
 
    vk->context.swapchain_width        = swapchain_size.width;
    vk->context.swapchain_height       = swapchain_size.height;
@@ -2648,6 +2665,15 @@ void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)
       RARCH_LOG("[Vulkan] QueuePresent failed, destroying swapchain.\n");
       vulkan_destroy_swapchain(vk);
    }
+
+#ifdef VK_EXT_full_screen_exclusive
+   PFN_vkReleaseFullScreenExclusiveModeEXT vkReleaseFullScreenExclusiveModeEXT =
+      (PFN_vkReleaseFullScreenExclusiveModeEXT)
+      vkGetDeviceProcAddr(vk->context.device, "vkReleaseFullScreenExclusiveModeEXT");
+   if (vkReleaseFullScreenExclusiveModeEXT)
+      vkReleaseFullScreenExclusiveModeEXT(vk->context.device, vk->swapchain);
+   /* Release exclusive fullscreen. */
+#endif
 
 #ifdef HAVE_THREADS
    slock_unlock(vk->context.queue_lock);
