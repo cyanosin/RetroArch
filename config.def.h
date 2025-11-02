@@ -241,7 +241,7 @@
  * WinRT and Winapi Family builds */
 #define DEFAULT_FULLSCREEN true
 #else
-#define DEFAULT_FULLSCREEN false
+#define DEFAULT_FULLSCREEN true
 #endif
 
 /* To use windowed mode or not when going fullscreen. */
@@ -249,12 +249,12 @@
 /* Do not use windowed mode for WinRT and Winapi Family builds on the Xbox UWP with fixed resolution shrinks the image into the left top corner of the screen with some libretro cores */
 #define DEFAULT_WINDOWED_FULLSCREEN false
 #else
-#define DEFAULT_WINDOWED_FULLSCREEN true
+#define DEFAULT_WINDOWED_FULLSCREEN false
 #endif
 
 /* Enable automatic switching of the screen refresh rate when using the specified screen mode(s),
  * based on running core/content */
-#define DEFAULT_AUTOSWITCH_REFRESH_RATE AUTOSWITCH_REFRESH_RATE_EXCLUSIVE_FULLSCREEN
+#define DEFAULT_AUTOSWITCH_REFRESH_RATE AUTOSWITCH_REFRESH_RATE_OFF
 #define DEFAULT_AUTOSWITCH_PAL_THRESHOLD 54.50f
 
 /* Which monitor to prefer. 0 is any monitor, 1 and up selects
@@ -365,14 +365,14 @@
 
 /* Forcibly disable composition.
  * Only valid on Windows Vista/7/8 for now. */
-#define DEFAULT_DISABLE_COMPOSITION false
+#define DEFAULT_DISABLE_COMPOSITION true
 
 /* Video VSYNC (recommended) */
 #define DEFAULT_VSYNC true
 
 /* Vulkan specific */
 #define DEFAULT_MAX_SWAPCHAIN_IMAGES 3
-#define MINIMUM_MAX_SWAPCHAIN_IMAGES 2
+#define MINIMUM_MAX_SWAPCHAIN_IMAGES 1
 #define MAXIMUM_MAX_SWAPCHAIN_IMAGES 4
 
 /* D3D1x specific */
@@ -389,7 +389,7 @@
 
 /* Attempts to hard-synchronize CPU and GPU.
  * Can reduce latency at cost of performance. */
-#define DEFAULT_HARD_SYNC false
+#define DEFAULT_HARD_SYNC true
 
 /* Configures how many frames the GPU can run ahead of CPU.
  * 0: Syncs to GPU immediately.
@@ -477,7 +477,7 @@
 #if defined(_3DS) || defined(GEKKO) || defined(HW_RVL) || defined(PSP) || defined(VITA) || defined(SN_TARGET_PSP2) || defined(PS2) || defined(_XBOX) || defined(DINGUX)
 #define DEFAULT_VIDEO_SMOOTH true
 #else
-#define DEFAULT_VIDEO_SMOOTH false
+#define DEFAULT_VIDEO_SMOOTH true
 #endif
 
 /* Graphics context specific scaling */
@@ -666,12 +666,12 @@
 
 #ifdef HAVE_OZONE
 /* Ozone colour theme: 1 == Basic Black */
-#define DEFAULT_OZONE_COLOR_THEME 1
+#define DEFAULT_OZONE_COLOR_THEME 10
 #define DEFAULT_OZONE_PADDING_FACTOR 1.0f
 #define DEFAULT_OZONE_HEADER_SEPARATOR 1
 #define DEFAULT_OZONE_COLLAPSE_SIDEBAR false
 #define DEFAULT_OZONE_SCROLL_CONTENT_METADATA false
-#define DEFAULT_OZONE_THUMBNAIL_SCALE_FACTOR 1.0f
+#define DEFAULT_OZONE_THUMBNAIL_SCALE_FACTOR 1.8f
 #define DEFAULT_OZONE_FONT_SCALE 0
 #define DEFAULT_OZONE_FONT_SCALE_FACTOR_GLOBAL 1.0f
 #define DEFAULT_OZONE_FONT_SCALE_FACTOR_TITLE 1.0f
@@ -810,11 +810,11 @@
 #endif
 
 #define DEFAULT_CONTENT_SHOW_SETTINGS true
-#define DEFAULT_CONTENT_SHOW_HISTORY true
-#define DEFAULT_CONTENT_SHOW_FAVORITES true
+#define DEFAULT_CONTENT_SHOW_HISTORY false
+#define DEFAULT_CONTENT_SHOW_FAVORITES false
 #define DEFAULT_CONTENT_SHOW_FAVORITES_FIRST false
 #ifdef HAVE_IMAGEVIEWER
-#define DEFAULT_CONTENT_SHOW_IMAGES true
+#define DEFAULT_CONTENT_SHOW_IMAGES false
 #endif
 #define DEFAULT_CONTENT_SHOW_MUSIC false
 #if defined(HAVE_FFMPEG) || defined(HAVE_MPV)
@@ -834,9 +834,9 @@
 #define DEFAULT_CONTENT_SHOW_PLAYLIST_TABS true
 
 #if defined(HAVE_LIBRETRODB)
-#define DEFAULT_MENU_CONTENT_SHOW_EXPLORE true
+#define DEFAULT_MENU_CONTENT_SHOW_EXPLORE false
 #endif
-#define DEFAULT_MENU_CONTENT_SHOW_CONTENTLESS_CORES MENU_CONTENTLESS_CORES_DISPLAY_SINGLE_PURPOSE
+#define DEFAULT_MENU_CONTENT_SHOW_CONTENTLESS_CORES false
 
 #ifdef HAVE_XMB
 #define DEFAULT_XMB_ANIMATION                      0
@@ -1096,7 +1096,7 @@
 
 /* Display an animation when loading content
  * > Currently implemented only as a widget */
-#define DEFAULT_MENU_SHOW_LOAD_CONTENT_ANIMATION DEFAULT_MENU_ENABLE_WIDGETS
+#define DEFAULT_MENU_SHOW_LOAD_CONTENT_ANIMATION false
 
 /* Display a notification when successfully
  * connecting/disconnecting an autoconfigured
@@ -1261,10 +1261,10 @@
 #define DEFAULT_FPS_SHOW false
 
 /* FPS display will be updated at the set interval (in frames) */
-#define DEFAULT_FPS_UPDATE_INTERVAL 256
+#define DEFAULT_FPS_UPDATE_INTERVAL 60
 
 /* Memory status display will be updated at the set interval (in frames) */
-#define DEFAULT_MEMORY_UPDATE_INTERVAL 256
+#define DEFAULT_MEMORY_UPDATE_INTERVAL 60
 
 /* Enables displaying the current frame count. */
 #define DEFAULT_FRAMECOUNT_SHOW false
@@ -1307,7 +1307,7 @@
 #endif
 
 /* Pause gameplay when window loses focus. */
-#define DEFAULT_PAUSE_NONACTIVE true
+#define DEFAULT_PAUSE_NONACTIVE false
 
 /* Pause gameplay when controller disconnects. */
 #define DEFAULT_PAUSE_ON_DISCONNECT false
@@ -1552,7 +1552,7 @@
 #elif defined(__ANDROID__)
 #define DEFAULT_MENU_SCALE_FACTOR 0.75f
 #else
-#define DEFAULT_MENU_SCALE_FACTOR 1.0f
+#define DEFAULT_MENU_SCALE_FACTOR 0.87f
 #endif
 /* Specifies whether display widgets should be scaled
  * automatically using the default menu scale factor */
@@ -1594,7 +1594,7 @@
 
 
 /* Describes speed of which turbo-enabled buttons toggle. */
-#define DEFAULT_TURBO_ENABLE true
+#define DEFAULT_TURBO_ENABLE false
 #define DEFAULT_TURBO_PERIOD 6
 #define DEFAULT_TURBO_DUTY_CYCLE 0
 #define DEFAULT_TURBO_MODE 0
@@ -1671,8 +1671,8 @@
 #else
 #define DEFAULT_MENU_TIMEDATE_ENABLE true
 #endif
-#define DEFAULT_MENU_TIMEDATE_STYLE          MENU_TIMEDATE_STYLE_DDMM_HM
-#define DEFAULT_MENU_TIMEDATE_DATE_SEPARATOR MENU_TIMEDATE_DATE_SEPARATOR_HYPHEN
+#define DEFAULT_MENU_TIMEDATE_STYLE          MENU_TIMEDATE_STYLE_YMD_HMS
+#define DEFAULT_MENU_TIMEDATE_DATE_SEPARATOR MENU_TIMEDATE_DATE_SEPARATOR_PERIOD
 #define DEFAULT_MENU_REMEMBER_SELECTION      MENU_REMEMBER_SELECTION_ALWAYS
 #define DEFAULT_MENU_STARTUP_PAGE            MENU_STARTUP_PAGE_MAIN_MENU
 #endif

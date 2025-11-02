@@ -7724,22 +7724,40 @@ static int setting_action_start_video_refresh_rate_auto(
 }
 
 static int setting_action_start_video_refresh_rate_polled(
-      rarch_setting_t *setting)
+      rarch_setting_t* setting)
 {
-   /* Relay action to ok to prevent duplicate notifications */
+#ifdef _WIN32
+   /* Trigger Alt+Enter Exclusive Fullscreen when "Set Display-Reported Refresh Rate" is used */
+   if (string_is_equal(video_driver_get_ident(), "d3d11"))
+   {
+      INPUT in[4] = { 0 };
+
+      in[0].type = INPUT_KEYBOARD; in[0].ki.wVk = VK_MENU;
+      in[1].type = INPUT_KEYBOARD; in[1].ki.wVk = VK_RETURN;
+      in[2].type = INPUT_KEYBOARD; in[2].ki.wVk = VK_RETURN; in[2].ki.dwFlags = KEYEVENTF_KEYUP;
+      in[3].type = INPUT_KEYBOARD; in[3].ki.wVk = VK_MENU;   in[3].ki.dwFlags = KEYEVENTF_KEYUP;
+
+      SendInput(_countof(in), in, sizeof(INPUT));
+      RARCH_LOG("[AutoExclusive] Alt+Enter triggered.\n");
+
+      return 0; /* Prevent refresh rate change */
+   }
+#endif
+
+   /* Original action: A button just changes refresh rate */
    return setting_action_ok_video_refresh_rate_polled(setting, 0, false);
 }
 
-static int setting_action_start_input_mouse_index(rarch_setting_t *setting)
+static int setting_action_start_input_mouse_index(rarch_setting_t* setting)
 {
-   settings_t      *settings = config_get_ptr();
+   settings_t* settings = config_get_ptr();
 
    if (!setting || !settings)
       return -1;
 
    configuration_set_uint(settings,
-         settings->uints.input_mouse_index[setting->index_offset],
-         setting->index_offset);
+      settings->uints.input_mouse_index[setting->index_offset],
+      setting->index_offset);
    return 0;
 }
 

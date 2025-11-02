@@ -1787,20 +1787,20 @@ static bool d3d10_init_swapchain(d3d10_video_t *d3d10,
    UINT                 flags              = 0;
    DXGI_SWAP_CHAIN_DESC desc               = {{0}};
 
-   desc.BufferCount                        = 1;
+   desc.BufferCount                        = 3;
    desc.BufferDesc.Width                   = width;
    desc.BufferDesc.Height                  = height;
    desc.BufferDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
-   desc.BufferDesc.RefreshRate.Numerator   = 60;
-   desc.BufferDesc.RefreshRate.Denominator = 1;
+   desc.BufferDesc.RefreshRate.Numerator   = 0;
+   desc.BufferDesc.RefreshRate.Denominator = 0;
    desc.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 #ifdef HAVE_WINDOW
    desc.OutputWindow                       = (HWND)corewindow;
 #endif
    desc.SampleDesc.Count                   = 1;
    desc.SampleDesc.Quality                 = 0;
-   desc.Windowed                           = TRUE;
-   desc.SwapEffect                         = DXGI_SWAP_EFFECT_SEQUENTIAL;
+   desc.Windowed                           = FALSE;
+   desc.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
 
 #ifdef DEBUG
    flags                                  |= D3D10_CREATE_DEVICE_DEBUG;
