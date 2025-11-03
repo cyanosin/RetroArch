@@ -35,6 +35,7 @@
 #include "../include/vulkan/vulkan.h"
 #include "vksym.h"
 #include <libretro_vulkan.h>
+#include <windows.h>
 
 #include "../../verbosity.h"
 #include "../../configuration.h"
@@ -520,13 +521,29 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
    return true;
 }
 
-static const char *vulkan_device_extensions[]  = {
-   "VK_KHR_swapchain",
-   "VK_EXT_full_screen_exclusive"
+static const char* vulkan_device_extensions[] = {
+    "VK_KHR_swapchain",
+    "VK_EXT_full_screen_exclusive"
 };
 
-static const char *vulkan_optional_device_extensions[] = {
-   "VK_KHR_sampler_mirror_clamp_to_edge",
+static const char* vulkan_optional_device_extensions[] = {
+    "VK_KHR_sampler_mirror_clamp_to_edge",
+    "VK_EXT_swapchain_colorspace",
+    "VK_EXT_swapchain_maintenance1",
+    "VK_KHR_maintenance1",
+    "VK_KHR_maintenance2",
+    "VK_KHR_maintenance3",
+    "VK_KHR_maintenance4",
+    "VK_EXT_synchronization2"
+    "VK_EXT_calibrated_timestamps"
+    "VK_EXT_memory_budget",
+    "VK_EXT_memory_priority",
+    "VK_KHR_timeline_semaphore"
+    "VK_EXT_pipeline_creation_cache_control"
+    "VK_EXT_image_drm_format_modifier"
+    "VK_EXT_present_timing",
+    "VK_EXT_present_id",
+    "VK_EXT_hdr_metadata"
 };
 
 static VkDevice vulkan_context_create_device_wrapper(
@@ -875,6 +892,7 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
    info.ppEnabledLayerNames         = instance_layers;
 
    required_extensions[required_extension_count++] = "VK_KHR_surface";
+   required_extensions[required_extension_count++] = "VK_KHR_get_surface_capabilities2";
 
    switch (vk->wsi_type)
    {
@@ -2281,11 +2299,26 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
       vkDestroySwapchainKHR(vk->context.device, old_swapchain, NULL);
 
 #ifdef VK_EXT_full_screen_exclusive
+#ifdef _WIN32
+   HWND hwnd = GetActiveWindow();
+#endif
+
    VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
-       .sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
-       .pNext = NULL,
-       .fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT
+       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
+       NULL,
+       VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT
    };
+
+#ifdef _WIN32
+   VkSurfaceFullScreenExclusiveWin32InfoEXT win32_info = {
+       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT,
+       NULL,
+       hwnd
+   };
+
+   fs_info.pNext = &win32_info;
+#endif
+
    info.pNext = &fs_info;
 #endif
 
