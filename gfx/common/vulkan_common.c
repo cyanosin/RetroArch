@@ -893,7 +893,7 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
 
    required_extensions[required_extension_count++] = "VK_KHR_surface";
    required_extensions[required_extension_count++] = "VK_KHR_get_surface_capabilities2";
-
+   
    switch (vk->wsi_type)
    {
       case VULKAN_WSI_WAYLAND:
@@ -2300,27 +2300,33 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
 
 #ifdef VK_EXT_full_screen_exclusive
 #ifdef _WIN32
-   HWND hwnd = GetActiveWindow();
-#endif
+   /* Tie exclusive mode to the window’s monitor (important on multi-display). */
+   HMONITOR fse_monitor = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
 
+   VkSurfaceFullScreenExclusiveWin32InfoEXT fs_win32 = {
+       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT,
+       NULL,
+       fse_monitor
+   };
+
+   /* Ask the driver to ALLOW exclusive fullscreen at swapchain creation. */
+   VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
+       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
+       &fs_win32, /* <- chain win32 */
+       VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
+   };
+
+   /* Attach fullscreen info to swapchain creation struct. */
+   info.pNext = &fs_info;
+#else
    VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
        VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
        NULL,
-       VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT
+       VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
    };
-
-#ifdef _WIN32
-   VkSurfaceFullScreenExclusiveWin32InfoEXT win32_info = {
-       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT,
-       NULL,
-       hwnd
-   };
-
-   fs_info.pNext = &win32_info;
-#endif
-
    info.pNext = &fs_info;
-#endif
+#endif /* _WIN32 */
+#endif /* VK_EXT_full_screen_exclusive */
 
    if (vkCreateSwapchainKHR(vk->context.device,
             &info, NULL, &vk->swapchain) != VK_SUCCESS)
@@ -2328,13 +2334,6 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
       RARCH_ERR("[Vulkan] Failed to create swapchain.\n");
       return false;
    }
-
-   /* Acquire exclusive fullscreen. */
-#ifdef VK_EXT_full_screen_exclusive
-   PFN_vkAcquireFullScreenExclusiveModeEXT vkAcquireFullScreenExclusiveModeEXT =
-      (PFN_vkAcquireFullScreenExclusiveModeEXT)
-      vkGetDeviceProcAddr(vk->context.device, "vkAcquireFullScreenExclusiveModeEXT");
-#endif
 
    vk->context.swapchain_width        = swapchain_size.width;
    vk->context.swapchain_height       = swapchain_size.height;
@@ -2698,15 +2697,6 @@ void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)
       RARCH_LOG("[Vulkan] QueuePresent failed, destroying swapchain.\n");
       vulkan_destroy_swapchain(vk);
    }
-
-#ifdef VK_EXT_full_screen_exclusive
-   PFN_vkReleaseFullScreenExclusiveModeEXT vkReleaseFullScreenExclusiveModeEXT =
-      (PFN_vkReleaseFullScreenExclusiveModeEXT)
-      vkGetDeviceProcAddr(vk->context.device, "vkReleaseFullScreenExclusiveModeEXT");
-   if (vkReleaseFullScreenExclusiveModeEXT)
-      vkReleaseFullScreenExclusiveModeEXT(vk->context.device, vk->swapchain);
-   /* Release exclusive fullscreen. */
-#endif
 
 #ifdef HAVE_THREADS
    slock_unlock(vk->context.queue_lock);
