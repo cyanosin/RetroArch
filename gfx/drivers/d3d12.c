@@ -2766,7 +2766,7 @@ static bool d3d12_init_swapchain(d3d12_video_t* d3d12,
       ? DXGI_SWAPCHAIN_BIT_DEPTH_10 : DXGI_SWAPCHAIN_BIT_DEPTH_8;
 #endif
 
-   desc.BufferCount          = countof(d3d12->chain.renderTargets);
+   desc.BufferCount          = 2;
    desc.BufferUsage          = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 #ifdef __WINRT__
    desc.Width                = width;

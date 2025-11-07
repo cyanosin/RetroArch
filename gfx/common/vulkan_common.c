@@ -523,7 +523,9 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
 
 static const char* vulkan_device_extensions[] = {
     "VK_KHR_swapchain",
+#ifdef VK_USE_PLATFORM_WIN32_KHR
     "VK_EXT_full_screen_exclusive"
+#endif
 };
 
 static const char* vulkan_optional_device_extensions[] = {
@@ -892,7 +894,6 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
    info.ppEnabledLayerNames         = instance_layers;
 
    required_extensions[required_extension_count++] = "VK_KHR_surface";
-   required_extensions[required_extension_count++] = "VK_KHR_get_surface_capabilities2";
    
    switch (vk->wsi_type)
    {
@@ -904,6 +905,7 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
          break;
       case VULKAN_WSI_WIN32:
          required_extensions[required_extension_count++] = "VK_KHR_win32_surface";
+         required_extensions[required_extension_count++] = "VK_KHR_get_surface_capabilities2";
          break;
       case VULKAN_WSI_XLIB:
          required_extensions[required_extension_count++] = "VK_KHR_xlib_surface";
@@ -2298,8 +2300,7 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    if (old_swapchain != VK_NULL_HANDLE)
       vkDestroySwapchainKHR(vk->context.device, old_swapchain, NULL);
 
-#ifdef VK_EXT_full_screen_exclusive
-#ifdef _WIN32
+#ifdef VK_USE_PLATFORM_WIN32_KHR
    /* Tie exclusive mode to the window’s monitor (important on multi-display). */
    HMONITOR fse_monitor = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
 
@@ -2325,8 +2326,7 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
        VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
    };
    info.pNext = &fs_info;
-#endif /* _WIN32 */
-#endif /* VK_EXT_full_screen_exclusive */
+#endif
 
    if (vkCreateSwapchainKHR(vk->context.device,
             &info, NULL, &vk->swapchain) != VK_SUCCESS)
