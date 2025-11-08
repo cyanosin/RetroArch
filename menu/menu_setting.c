@@ -12802,6 +12802,21 @@ static bool setting_append_list(
                menu_settings_list_current_add_range(list, list_info, 0, 4320, 8, true, true);
             }
 
+            CONFIG_BOOL(
+               list, list_info,
+               &settings->bools.video_exclusive_fullscreen,
+               MENU_ENUM_LABEL_VIDEO_EXCLUSIVE_FULLSCREEN,
+               MENU_ENUM_LABEL_VALUE_VIDEO_EXCLUSIVE_FULLSCREEN,
+               DEFAULT_EXCLUSIVE_FULLSCREEN,
+               MENU_ENUM_LABEL_VALUE_OFF,
+               MENU_ENUM_LABEL_VALUE_ON,
+               &group_info,
+               &subgroup_info,
+               parent_group,
+               general_write_handler,
+               general_read_handler,
+               SD_FLAG_NONE);
+
 #if defined(DINGUX) && defined(DINGUX_BETA)
             if (   string_is_equal(settings->arrays.video_driver, "sdl_dingux")
                 || string_is_equal(settings->arrays.video_driver, "sdl_rs90"))

@@ -2404,6 +2404,14 @@ MSG_HASH(
    "If fullscreen, prefer using a fullscreen window to prevent display mode switching."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_EXCLUSIVE_FULLSCREEN,
+   "Exclusive Fullscreen Mode"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_EXCLUSIVE_FULLSCREEN,
+   "Allow exclusive fullscreen when using the Vulkan driver."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_X,
    "Fullscreen Width"
    )

@@ -1890,7 +1890,8 @@ static struct config_bool_setting *populate_settings_bool(
    SETTING_BOOL("video_scan_subframes",          &settings->bools.video_scan_subframes, true, DEFAULT_SCAN_SUBFRAMES, false);
 
    SETTING_BOOL("video_allow_rotate",            &settings->bools.video_allow_rotate, true, DEFAULT_ALLOW_ROTATE, false);
-   SETTING_BOOL("video_windowed_fullscreen",     &settings->bools.video_windowed_fullscreen, true, DEFAULT_WINDOWED_FULLSCREEN, false);
+   SETTING_BOOL("video_windowed_fullscreen",     &settings->bools.video_windowed_fullscreen, true, DEFAULT_WINDOWED_FULLSCREEN, false);//
+   SETTING_BOOL("video_exclusive_fullscreen",    &settings->bools.video_exclusive_fullscreen, true, DEFAULT_EXCLUSIVE_FULLSCREEN, false);
    SETTING_BOOL("video_crop_overscan",           &settings->bools.video_crop_overscan, true, DEFAULT_CROP_OVERSCAN, false);
    SETTING_BOOL("video_scale_integer",           &settings->bools.video_scale_integer, true, DEFAULT_SCALE_INTEGER, false);
    SETTING_BOOL("video_smooth",                  &settings->bools.video_smooth, true, DEFAULT_VIDEO_SMOOTH, false);

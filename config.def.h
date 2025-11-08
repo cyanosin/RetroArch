@@ -252,6 +252,9 @@
 #define DEFAULT_WINDOWED_FULLSCREEN false
 #endif
 
+/* To allow or disallow VK_EXT_full_screen_exclusive. */
+#define DEFAULT_EXCLUSIVE_FULLSCREEN true
+
 /* Enable automatic switching of the screen refresh rate when using the specified screen mode(s),
  * based on running core/content */
 #define DEFAULT_AUTOSWITCH_REFRESH_RATE AUTOSWITCH_REFRESH_RATE_OFF

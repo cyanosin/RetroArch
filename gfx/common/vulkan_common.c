@@ -2301,7 +2301,7 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
       vkDestroySwapchainKHR(vk->context.device, old_swapchain, NULL);
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-   /* Tie exclusive mode to the window’s monitor (important on multi-display). */
+   /* Tie exclusive mode to the window's monitor (important on multi-display). */
    HMONITOR fse_monitor = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
 
    VkSurfaceFullScreenExclusiveWin32InfoEXT fs_win32 = {
@@ -2310,21 +2310,16 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
        fse_monitor
    };
 
-   /* Ask the driver to ALLOW exclusive fullscreen at swapchain creation. */
+   /* Allow or disallow exclusive fullscreen based on user setting. */
    VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
        VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
-       &fs_win32, /* <- chain win32 */
-       VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
+       &fs_win32,
+       settings->bools.video_exclusive_fullscreen
+           ? VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
+           : VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT
    };
 
    /* Attach fullscreen info to swapchain creation struct. */
-   info.pNext = &fs_info;
-#else
-   VkSurfaceFullScreenExclusiveInfoEXT fs_info = {
-       VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
-       NULL,
-       VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
-   };
    info.pNext = &fs_info;
 #endif
 

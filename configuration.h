@@ -624,6 +624,7 @@ typedef struct settings
       /* Video */
       bool video_fullscreen;
       bool video_windowed_fullscreen;
+      bool video_exclusive_fullscreen;
       bool video_vsync;
       bool video_adaptive_vsync;
       bool video_hard_sync;
