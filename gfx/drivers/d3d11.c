@@ -2118,12 +2118,16 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
 #ifdef __WINRT__
    IDXGIFactory2* dxgiFactory              = NULL;
 #else
-   IDXGIFactory*  dxgiFactory              = NULL;
+   IDXGIFactory* dxgiFactory               = NULL;
    IDXGIFactory5* dxgiFactory5             = NULL;
 #endif
    IDXGIDevice* dxgiDevice                 = NULL;
    IDXGIAdapter* adapter                   = NULL;
-   UINT                 flags              = 0;
+   UINT flags                              = 0;
+
+   settings_t* settings                    = config_get_ptr();
+   bool use_triple_buffering               = settings->bools.video_triple_buffering;
+
    D3D_FEATURE_LEVEL
       requested_feature_levels[]           =
       {
@@ -2176,7 +2180,9 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
 #endif
       desc.Format                          = DXGI_FORMAT_R8G8B8A8_UNORM;
 #else
-   desc.BufferCount                        = 3;
+   desc.BufferCount                        = use_triple_buffering ? 3 : 2;
+   RARCH_LOG("[D3D11] BufferCount = %u\n",
+      use_triple_buffering ? 3 : 2);
 
    desc.BufferDesc.Width                   = width;
    desc.BufferDesc.Height                  = height;
@@ -2199,7 +2205,7 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
 #ifdef HAVE_WINDOW
    desc.Windowed                           = FALSE;
 #endif
-
+ 
 #ifdef DEBUG
    flags                                  |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
@@ -2363,6 +2369,7 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
          &desc, (IDXGISwapChain**)&d3d11->swapChain)))
          return false;
    }
+
 #ifdef HAVE_WINDOW
    /* Ensure DXGI (re)enters exclusive fullscreen (legacy flip). */
    dxgiFactory->lpVtbl->MakeWindowAssociation(dxgiFactory, desc.OutputWindow, 0);
@@ -4099,7 +4106,7 @@ static bool d3d11_gfx_read_viewport(void* data, uint8_t* buffer, bool is_idle)
    /* Create the image. */
    d3d11->context->lpVtbl->Map(d3d11->context, BackBufferStaging, 0, D3D11_MAP_READ, 0, &Map);
    BackBufferData = (const uint8_t*)Map.pData;
-
+   
    /* Assuming format is DXGI_FORMAT_R8G8B8A8_UNORM */
    if (StagingDesc.Format == DXGI_FORMAT_R8G8B8A8_UNORM)
    {

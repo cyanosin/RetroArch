@@ -2328,7 +2328,7 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_REFRESH_RATE_POLLED,
-   "Press START to switch fullscreen mode. (d3d11 only)"
+   "Press START to switch fullscreen presentation. (d3d11 only)"
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_AUTOSWITCH_REFRESH_RATE,
@@ -2405,11 +2405,11 @@ MSG_HASH(
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_EXCLUSIVE_FULLSCREEN,
-   "Exclusive Fullscreen Mode"
+   "Allow Exclusive Fullscreen"
    )
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_EXCLUSIVE_FULLSCREEN,
-   "Allow exclusive fullscreen when using the Vulkan driver."
+   "Overrides the Vulkan driver's heuristics for enabling legacy flip."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_FULLSCREEN_X,
@@ -13660,6 +13660,14 @@ MSG_HASH(
 MSG_HASH(
    MENU_ENUM_SUBLABEL_VIDEO_WAITABLE_SWAPCHAINS,
    "Hard-synchronize the CPU and GPU. Reduces latency at the cost of performance."
+   )
+MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_TRIPLE_BUFFERING,
+   "Triple Buffering (Restart required)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_TRIPLE_BUFFERING,
+   "Adds an additional backbuffer, resulting in smoother frame pacing at the cost of increased latency."
    )
 MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_MAX_FRAME_LATENCY,
