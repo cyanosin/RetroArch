@@ -9838,7 +9838,9 @@ unsigned menu_displaylist_build_list(
             menu_displaylist_build_info_selective_t build_list[] = {
                {MENU_ENUM_LABEL_VIDEO_FULLSCREEN,                  PARSE_ONLY_BOOL,     true  },
                {MENU_ENUM_LABEL_VIDEO_WINDOWED_FULLSCREEN,         PARSE_ONLY_BOOL,     true  },
+#ifdef HAVE_VULKAN
                {MENU_ENUM_LABEL_VIDEO_EXCLUSIVE_FULLSCREEN,        PARSE_ONLY_BOOL,     true  },
+#endif
                {MENU_ENUM_LABEL_VIDEO_FULLSCREEN_X,                PARSE_ONLY_UINT,     true  },
                {MENU_ENUM_LABEL_VIDEO_FULLSCREEN_Y,                PARSE_ONLY_UINT,     true  },
 #ifdef __WINRT__
@@ -9975,6 +9977,7 @@ unsigned menu_displaylist_build_list(
             bool video_vsync            = settings->bools.video_vsync;
             bool video_hard_sync        = settings->bools.video_hard_sync;
             bool video_wait_swap        = settings->bools.video_waitable_swapchains;
+            bool video_blit_swapchain   = settings->bools.video_blit_swapchain;
             bool video_triple_buffering = settings->bools.video_triple_buffering;
             unsigned bfi                = settings->uints.video_black_frame_insertion;
             unsigned shader_subframes   = settings->uints.video_shader_subframes;
@@ -10060,11 +10063,15 @@ unsigned menu_displaylist_build_list(
             if (string_is_equal(video_driver_get_ident(), "d3d11"))
             {
                if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
+                  MENU_ENUM_LABEL_VIDEO_BLIT_SWAPCHAIN,
+                  PARSE_ONLY_BOOL, false) == 0)
+                  count++;
+               if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
                   MENU_ENUM_LABEL_VIDEO_TRIPLE_BUFFERING,
                   PARSE_ONLY_BOOL, false) == 0)
                   count++;
             }
-
+            
             if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
                      MENU_ENUM_LABEL_VIDEO_FRAME_DELAY_AUTO,
                      PARSE_ONLY_BOOL, false) == 0)
@@ -10608,6 +10615,7 @@ unsigned menu_displaylist_build_list(
          {
             bool video_hard_sync          = settings->bools.video_hard_sync;
             bool video_wait_swap          = settings->bools.video_waitable_swapchains;
+            bool video_blit_swapchain     = settings->bools.video_blit_swapchain;
             bool video_triple_buffering   = settings->bools.video_triple_buffering;
 #ifdef HAVE_RUNAHEAD
             bool runahead_supported       = true;
@@ -10652,8 +10660,12 @@ unsigned menu_displaylist_build_list(
                }
             }
 
-            if (string_is_equal(video_driver_get_ident(), "d3d9_hsls, d3d10, d3d11, d3d12"))
+            if (string_is_equal(video_driver_get_ident(), "d3d11"))
             {
+               if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
+                  MENU_ENUM_LABEL_VIDEO_BLIT_SWAPCHAIN,
+                  PARSE_ONLY_BOOL, false) == 0)
+                  count++;
                if (MENU_DISPLAYLIST_PARSE_SETTINGS_ENUM(list,
                   MENU_ENUM_LABEL_VIDEO_TRIPLE_BUFFERING,
                   PARSE_ONLY_BOOL, false) == 0)

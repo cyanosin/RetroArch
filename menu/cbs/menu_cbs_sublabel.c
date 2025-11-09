@@ -400,6 +400,7 @@ DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_bluetooth_ertm_disable,        MENU_
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_user_language,                 MENU_ENUM_SUBLABEL_USER_LANGUAGE)
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_max_swapchain_images,          MENU_ENUM_SUBLABEL_VIDEO_MAX_SWAPCHAIN_IMAGES)
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_waitable_swapchains,           MENU_ENUM_SUBLABEL_VIDEO_WAITABLE_SWAPCHAINS)
+DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_blit_swapchain,                MENU_ENUM_SUBLABEL_VIDEO_BLIT_SWAPCHAIN)
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_triple_buffering,              MENU_ENUM_SUBLABEL_VIDEO_TRIPLE_BUFFERING)
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_max_frame_latency,             MENU_ENUM_SUBLABEL_VIDEO_MAX_FRAME_LATENCY)
 DEFAULT_SUBLABEL_MACRO(action_bind_sublabel_online_updater,                MENU_ENUM_SUBLABEL_ONLINE_UPDATER)
@@ -5124,6 +5125,9 @@ int menu_cbs_init_bind_sublabel(menu_file_list_cbs_t *cbs,
             break;
          case MENU_ENUM_LABEL_VIDEO_WAITABLE_SWAPCHAINS:
             BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_waitable_swapchains);
+            break;
+         case MENU_ENUM_LABEL_VIDEO_BLIT_SWAPCHAIN:
+            BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_blit_swapchain);
             break;
          case MENU_ENUM_LABEL_VIDEO_TRIPLE_BUFFERING:
             BIND_ACTION_SUBLABEL(cbs, action_bind_sublabel_triple_buffering);

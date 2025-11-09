@@ -13662,6 +13662,14 @@ MSG_HASH(
    "Hard-synchronize the CPU and GPU. Reduces latency at the cost of performance."
    )
 MSG_HASH(
+   MENU_ENUM_LABEL_VALUE_VIDEO_BLIT_SWAPCHAIN,
+   "Blit Swapchain (Restart required)"
+   )
+MSG_HASH(
+   MENU_ENUM_SUBLABEL_VIDEO_BLIT_SWAPCHAIN,
+   "Forces the driver to copy frames (blit) instead of flipping buffers. Improves compatiblity at the cost of performance and latency. Required for FSE to function."
+   )
+MSG_HASH(
    MENU_ENUM_LABEL_VALUE_VIDEO_TRIPLE_BUFFERING,
    "Triple Buffering (Restart required)"
    )

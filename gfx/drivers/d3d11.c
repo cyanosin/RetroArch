@@ -2126,6 +2126,7 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
    UINT flags                              = 0;
 
    settings_t* settings                    = config_get_ptr();
+   bool use_blit_swapchain                 = settings->bools.video_blit_swapchain;
    bool use_triple_buffering               = settings->bools.video_triple_buffering;
 
    D3D_FEATURE_LEVEL
@@ -2290,8 +2291,12 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
 #else
    if (d3d11->flags & D3D11_ST_FLAG_WAITABLE_SWAPCHAINS)
       desc.Flags                  |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-   desc.SwapEffect                 = DXGI_SWAP_EFFECT_DISCARD;
-   desc.Flags &= ~(DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
+
+   desc.SwapEffect = use_blit_swapchain ? DXGI_SWAP_EFFECT_DISCARD : DXGI_SWAP_EFFECT_FLIP_DISCARD;
+   RARCH_LOG("[D3D11] SwapEffect = %s\n",
+      use_blit_swapchain ? "Discard" : "Flip-Discard");
+
+   desc.Flags &= ~(DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT | D3D11_ST_FLAG_HAS_FLIP_MODEL)
       ; d3d11->flags = 0
 
       ; adapter->lpVtbl->GetParent(
@@ -2314,11 +2319,11 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
          &allow_tearing_supported, sizeof(allow_tearing_supported)))
          && allow_tearing_supported)
       {
-         desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+         desc.SwapEffect = use_blit_swapchain ? DXGI_SWAP_EFFECT_DISCARD : DXGI_SWAP_EFFECT_FLIP_DISCARD;
          desc.Flags     |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
          desc.Flags     |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-         RARCH_LOG("[D3D11] Creating blit swapchain.\n");
+         RARCH_LOG("[D3D11] Flip model and tear control supported.\n");
       }
 
       dxgiFactory5->lpVtbl->Release(dxgiFactory5);
@@ -2360,7 +2365,7 @@ static bool d3d11_init_swapchain(d3d11_video_t* d3d11,
 
       /* Acquire FSE : Blit Discard */
       desc.Windowed = FALSE;
-      desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+      desc.SwapEffect = use_blit_swapchain ? DXGI_SWAP_EFFECT_DISCARD : DXGI_SWAP_EFFECT_FLIP_DISCARD;
       desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
       desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
