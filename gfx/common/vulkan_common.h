@@ -158,6 +158,7 @@ enum vulkan_context_flags
    VK_CTX_FLAG_HDR_SUPPORT                  = (1 << 5),
    /* scRGB mode: RGBA16F swapchain with extended linear sRGB colour space */
    VK_CTX_FLAG_HDR_SCRGB                    = (1 << 6),
+   VK_CTX_FLAG_FSE_SUPPORT                  = (1 << 7)
 };
 
 enum vulkan_emulated_mailbox_flags
@@ -256,7 +257,8 @@ typedef struct gfx_ctx_vulkan_data
    struct vulkan_emulated_mailbox mailbox;
    uint8_t flags;
    enum vulkan_wsi_type wsi_type;
-   bool fse_supported;
+   uint64_t current_present_id;
+   bool present_wait_supported;
 } gfx_ctx_vulkan_data_t;
 
 struct vulkan_display_surface_info

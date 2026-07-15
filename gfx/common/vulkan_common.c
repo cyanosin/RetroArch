@@ -403,7 +403,7 @@ static bool vulkan_load_instance_symbols(gfx_ctx_vulkan_data_t *vk)
 
    VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkDestroySurfaceKHR);
    VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkGetPhysicalDeviceSurfaceSupportKHR);
-   VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+   VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkGetPhysicalDeviceSurfaceCapabilities2KHR);
    VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkGetPhysicalDeviceSurfaceFormatsKHR);
    VULKAN_SYMBOL_WRAPPER_LOAD_INSTANCE_EXTENSION_SYMBOL(vk->context.instance, vkGetPhysicalDeviceSurfacePresentModesKHR);
    return true;
@@ -419,6 +419,7 @@ static bool vulkan_load_device_symbols(gfx_ctx_vulkan_data_t *vk)
    VULKAN_SYMBOL_WRAPPER_LOAD_DEVICE_EXTENSION_SYMBOL(vk->context.device, vkGetSwapchainImagesKHR);
    VULKAN_SYMBOL_WRAPPER_LOAD_DEVICE_EXTENSION_SYMBOL(vk->context.device, vkAcquireNextImageKHR);
    VULKAN_SYMBOL_WRAPPER_LOAD_DEVICE_EXTENSION_SYMBOL(vk->context.device, vkQueuePresentKHR);
+   VULKAN_SYMBOL_WRAPPER_LOAD_DEVICE_EXTENSION_SYMBOL(vk->context.device, vkWaitForPresent2KHR);
    return true;
 }
 
@@ -492,6 +493,21 @@ static bool vulkan_find_instance_extensions(
    }
 
    for (i = 0; i < num_optional_exts; i++)
+   {
+      if (vulkan_find_extensions(&optional_exts[i], 1, properties, property_count))
+      {
+         RARCH_DBG("[Vulkan] Optional instance extension supported: %s.\n",
+            optional_exts[i]);
+
+         enabled[count++] = optional_exts[i];
+      }
+      else
+         RARCH_DBG("[Vulkan] Optional instance extension NOT supported: %s.\n",
+            optional_exts[i]);
+   }
+
+
+   for (i = 0; i < num_optional_exts; i++)
       if (vulkan_find_extensions(&optional_exts[i], 1, properties, property_count))
          enabled[count++] = optional_exts[i];
 
@@ -550,9 +566,8 @@ static bool vulkan_find_device_extensions(VkPhysicalDevice gpu,
          enabled[count++] = optional_exts[i];
       }
       else
-      {
          RARCH_DBG("[Vulkan] Optional device extension NOT supported: %s.\n", optional_exts[i]);
-      }
+      
    }
 
 end:
@@ -633,13 +648,18 @@ static bool vulkan_context_init_gpu(gfx_ctx_vulkan_data_t *vk)
 }
 
 static const char *vulkan_device_extensions[]  = {
-   "VK_KHR_swapchain"
+   "VK_KHR_swapchain",
+   "VK_KHR_present_id2",
+   "VK_KHR_present_wait2",
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+   "VK_EXT_full_screen_exclusive"
+#endif
 };
 
 static const char *vulkan_optional_device_extensions[] = {
    "VK_KHR_sampler_mirror_clamp_to_edge",
-   "VK_EXT_full_screen_exclusive",
-   "VK_KHR_portability_subset"
+   "VK_KHR_portability_subset",
+   "VK_KHR_present_mode_fifo_latest_ready"
 };
 
 static VkDevice vulkan_context_create_device_wrapper(
@@ -681,6 +701,8 @@ static VkDevice vulkan_context_create_device_wrapper(
 
 static bool vulkan_context_init_device(gfx_ctx_vulkan_data_t *vk)
 {
+   vk->current_present_id = 1;
+
    uint32_t queue_count;
    unsigned i;
    const char *enabled_device_extensions[8];
@@ -691,6 +713,17 @@ static bool vulkan_context_init_device(gfx_ctx_vulkan_data_t *vk)
    video_driver_state_t *video_st          = video_state_get_ptr();
 
    VkPhysicalDeviceFeatures features       = { false };
+
+   VkPhysicalDevicePresentId2FeaturesKHR present_id_features = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_2_FEATURES_KHR,
+      .pNext = NULL,
+      .presentId2 = VK_TRUE
+   };
+   VkPhysicalDevicePresentWait2FeaturesKHR present_wait_features = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_2_FEATURES_KHR,
+      .pNext = &present_id_features,
+      .presentWait2 = VK_TRUE
+   };
 
    unsigned enabled_device_extension_count = 0;
 
@@ -706,7 +739,7 @@ static bool vulkan_context_init_device(gfx_ctx_vulkan_data_t *vk)
    queue_info.pQueuePriorities             = NULL;
 
    device_info.sType                       = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-   device_info.pNext                       = NULL;
+   device_info.pNext                       = &present_wait_features;
    device_info.flags                       = 0;
    device_info.queueCreateInfoCount        = 0;
    device_info.pQueueCreateInfos           = NULL;
@@ -901,15 +934,17 @@ static bool vulkan_context_init_device(gfx_ctx_vulkan_data_t *vk)
           return false;
       }
 
-      vk->fse_supported = false;
-      for (unsigned i = 0; i < enabled_device_extension_count; i++)
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+      vk->context.flags &= ~VK_CTX_FLAG_FSE_SUPPORT;
+      for (i = 0; i < enabled_device_extension_count; i++)
       {
-         if (!strcmp(enabled_device_extensions[i], "VK_EXT_full_screen_exclusive"))
+         if (string_is_equal(enabled_device_extensions[i], VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME))
          {
-            vk->fse_supported = true;
+            vk->context.flags |= VK_CTX_FLAG_FSE_SUPPORT;
             break;
          }
       }
+#endif
 
       queue_info.queueFamilyIndex         = vk->context.graphics_queue_index;
       queue_info.queueCount               = 1;
@@ -975,9 +1010,6 @@ static const char *vulkan_optional_instance_extensions[] = {
 #ifdef __APPLE__
    VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
 #endif
-#ifdef _WIN32
-   "VK_KHR_get_surface_capabilities2",
-#endif
 #ifdef VULKAN_HDR_SWAPCHAIN
    VULKAN_COLORSPACE_EXTENSION_NAME
 #endif
@@ -1016,6 +1048,7 @@ static VkInstance vulkan_context_create_instance_wrapper(void *opaque, const VkI
    info.ppEnabledLayerNames         = instance_layers;
 
    required_extensions[required_extension_count++] = "VK_KHR_surface";
+   required_extensions[required_extension_count++] = "VK_KHR_get_surface_capabilities2";
 
    switch (vk->wsi_type)
    {
@@ -1934,21 +1967,37 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    bool vsync                              = settings->bools.video_vsync;
    bool adaptive_vsync                     = settings->bools.video_adaptive_vsync;
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-   bool video_windowed_fullscreen          = settings->bools.video_windowed_fullscreen;
-   HMONITOR hmonitor;
+   bool windowed_fullscreen                = settings->bools.video_windowed_fullscreen;
+   HMONITOR monitor;
    VkSurfaceFullScreenExclusiveInfoEXT fse_info = {
-      VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
-      NULL,
-      video_windowed_fullscreen
+      .sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT,
+      .pNext = NULL,
+      .fullScreenExclusive = windowed_fullscreen
          ? VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT
          : VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT
    };
    VkSurfaceFullScreenExclusiveWin32InfoEXT fse_win32_info = {
-      VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT,
-      NULL,
-      NULL
+      .sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT,
+      .pNext = NULL
    };
 #endif
+   VkSurfaceCapabilitiesPresentId2KHR present_id_properties = {
+      .sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_ID_2_KHR,
+      .pNext = NULL
+   };
+   VkSurfaceCapabilitiesPresentWait2KHR present_wait_properties = {
+      .sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_WAIT_2_KHR,
+      .pNext = &present_id_properties
+   };
+   VkSurfaceCapabilities2KHR surface_properties2 = {
+      .sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
+      .pNext = NULL
+   };
+   VkPhysicalDeviceSurfaceInfo2KHR surface_info = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SURFACE_INFO_2_KHR,
+      .pNext = NULL,
+      .surface = vk->vk_surface
+   };
 
    format.format                           = VK_FORMAT_UNDEFINED;
    format.colorSpace                       = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -1956,8 +2005,17 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    vkDeviceWaitIdle(vk->context.device);
    vulkan_acquire_clear_fences(vk);
 
-   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk->context.gpu,
-         vk->vk_surface, &surface_properties);
+   surface_properties2.pNext = &present_wait_properties;
+
+   if (vkGetPhysicalDeviceSurfaceCapabilities2KHR(vk->context.gpu,
+         &surface_info, &surface_properties2) != VK_SUCCESS)
+      return false;
+
+   surface_properties = surface_properties2.surfaceCapabilities;
+
+   vk->present_wait_supported =
+      present_wait_properties.presentWait2Supported == VK_TRUE
+   && present_id_properties.presentId2Supported == VK_TRUE;
 
    /* Skip creation when window is minimized */
    if (   !surface_properties.currentExtent.width
@@ -2106,6 +2164,9 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
             case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
                RARCH_DBG("[Vulkan] Swapchain supports present mode: FIFO_RELAXED.\n");
                break;
+            case VK_PRESENT_MODE_FIFO_LATEST_READY_KHR:
+               RARCH_DBG("[Vulkan] Swapchain supports present mode: FIFO_LATEST_READY.\n");
+               break;
             default:
                break;
          }
@@ -2126,6 +2187,9 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
             break;
          case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
             RARCH_DBG("[Vulkan] Creating swapchain with present mode: FIFO_RELAXED.\n");
+            break;
+         case VK_PRESENT_MODE_FIFO_LATEST_READY_KHR:
+            RARCH_DBG("[Vulkan] Swapchain supports present mode: FIFO_LATEST_READY.\n");
             break;
          default:
             break;
@@ -2444,6 +2508,8 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
    info.sType                  = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
    info.pNext                  = NULL;
    info.flags                  = 0;
+   info.flags                 |= VK_SWAPCHAIN_CREATE_PRESENT_ID_2_BIT_KHR;
+   info.flags                 |= VK_SWAPCHAIN_CREATE_PRESENT_WAIT_2_BIT_KHR;
    info.surface                = vk->vk_surface;
    info.minImageCount          = desired_swapchain_images;
    info.imageFormat            = format.format;
@@ -2477,10 +2543,10 @@ bool vulkan_create_swapchain(gfx_ctx_vulkan_data_t *vk,
 #endif
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-   if (vk->fse_supported)
+   if (vk->context.flags & VK_CTX_FLAG_FSE_SUPPORT)
    {
-      hmonitor                = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
-      fse_win32_info.hmonitor = hmonitor;
+      monitor                 = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
+      fse_win32_info.hmonitor = monitor;
       fse_info.pNext          = &fse_win32_info;
       info.pNext              = &fse_info;
    }
@@ -2883,9 +2949,25 @@ void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)
    VkPresentInfoKHR present;
    VkResult result                 = VK_SUCCESS;
    VkResult err                    = VK_SUCCESS;
+   settings_t *settings            = config_get_ptr();
+   bool present_wait               = settings->bools.video_wait_for_present;
+   bool present_wait_supported     = vk->present_wait_supported;
+   uint64_t pid                    = vk->current_present_id;
+   VkPresentId2KHR present_id = {
+      .sType = VK_STRUCTURE_TYPE_PRESENT_ID_2_KHR,
+      .pNext = NULL,
+      .swapchainCount = 1,
+      .pPresentIds = &pid
+   };
+   VkPresentWait2InfoKHR present_wait_info = {
+      .sType = VK_STRUCTURE_TYPE_PRESENT_WAIT_2_INFO_KHR,
+      .pNext = NULL,
+      .presentId = pid,
+      .timeout = UINT64_MAX
+   };
 
    present.sType                   = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-   present.pNext                   = NULL;
+   present.pNext                   = &present_id;
    present.waitSemaphoreCount      = 1;
    present.pWaitSemaphores         = &vk->context.swapchain_semaphores[index];
    present.swapchainCount          = 1;
@@ -2898,6 +2980,37 @@ void vulkan_present(gfx_ctx_vulkan_data_t *vk, unsigned index)
    slock_lock(vk->context.queue_lock);
 #endif
    err = vkQueuePresentKHR(vk->context.queue, &present);
+
+   if (present_wait)
+   {
+      static uint64_t last_log_usec = 0;
+      uint64_t time_usec = cpu_features_get_time_usec();
+      bool time_to_log = (last_log_usec == 0 ||
+         (time_usec - last_log_usec) >= (30 * 1000 * 1000));
+
+      if (present_wait_supported && vkWaitForPresent2KHR)
+      {
+         vkWaitForPresent2KHR(
+            vk->context.device,
+            vk->swapchain,
+            &present_wait_info);
+
+         if (time_to_log)
+            RARCH_DBG("[Vulkan] WaitForPresent active (pid: %" PRIu64 ").\n", pid);
+      }
+      else if (time_to_log)
+      {
+         if (!present_wait_supported)
+            RARCH_DBG("[Vulkan] WaitForPresent inactive (surface unsupported).\n");
+         if (!vkWaitForPresent2KHR)
+            RARCH_DBG("[Vulkan] WaitForPresent inactive (vkWaitForPresent2KHR unavailable).\n");
+      }
+
+      if (time_to_log)
+         last_log_usec = time_usec;
+   }
+
+   vk->current_present_id++;
 
    /* VK_SUBOPTIMAL_KHR can be returned on
     * Android 10 when prerotate is not dealt with.
