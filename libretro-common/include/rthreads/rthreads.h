@@ -254,6 +254,27 @@ void scond_signal(scond_t *cond);
 bool sthread_tls_create(sthread_tls_t *tls);
 
 /**
+ * Like sthread_tls_create(), but registers a destructor invoked with the
+ * thread-local value when a thread exits with a non-NULL value set for
+ * this key (POSIX pthread_key_create semantics). Used e.g. to release a
+ * per-thread resource such as a JNI attachment on thread teardown.
+ *
+ * The destructor is honoured on pthread backends; on Win32 the key is
+ * created without one (TlsAlloc has no destructor callback), so callers
+ * needing cleanup there must do it explicitly. Current users are POSIX.
+ *
+ * @param tls[in,out] Pointer to the key to initialize; must be cleaned up
+ * with sthread_tls_delete. Behavior is undefined if NULL.
+ * @param destructor Called with the thread-local value on thread exit;
+ * may be NULL for no destructor (equivalent to sthread_tls_create).
+ * @return true if the operation succeeded, false otherwise.
+ * @see sthread_tls_create
+ * @see sthread_tls_delete
+ */
+bool sthread_tls_create_with_dtor(sthread_tls_t *tls,
+      void (*destructor)(void *value));
+
+/**
  * Deletes a thread local storage key.
  *
  * The value must be cleaned up separately \em before calling this function,
@@ -317,6 +338,31 @@ uintptr_t sthread_get_current_thread_id(void);
  * platform offers no way to tell.
  */
 bool sthread_is_main_thread(void);
+
+/**
+ * Enable or defer cancellation of the CALLING thread (POSIX-style
+ * deferred cancellation). Bracket a critical section that must not be
+ * interrupted (e.g. one holding an open file or other resource) with
+ * sthread_set_cancel_enable(false) ... sthread_set_cancel_enable(true).
+ *
+ * A no-op on backends without thread cancellation (Win32, Android/Bionic,
+ * GEKKO, 3DS); pair it with a cooperative "done" flag so shutdown does not
+ * rely on cancellation being available.
+ *
+ * @param enable true to allow cancellation, false to defer it.
+ */
+void sthread_set_cancel_enable(bool enable);
+
+/**
+ * Request cancellation of @thread. Intended to interrupt a thread blocked
+ * at a cancellation point (e.g. a sleep) so it can exit promptly; the
+ * caller should still set a cooperative stop flag and sthread_join().
+ *
+ * @param thread The thread to cancel.
+ * @return true if the request was issued; false on failure or where the
+ * backend provides no cancellation (Win32, Android/Bionic, GEKKO, 3DS).
+ */
+bool sthread_cancel(sthread_t *thread);
 
 /**
  * Temporarily raise the CALLING thread's scheduling priority to match a

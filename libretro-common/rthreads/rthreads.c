@@ -799,6 +799,18 @@ bool sthread_tls_create(sthread_tls_t *tls)
 #endif
 }
 
+bool sthread_tls_create_with_dtor(sthread_tls_t *tls,
+      void (*destructor)(void *value))
+{
+#ifdef USE_WIN32_THREADS
+   /* TlsAlloc() provides no destructor callback; created without one. */
+   (void)destructor;
+   return (*tls = TlsAlloc()) != TLS_OUT_OF_INDEXES;
+#else
+   return pthread_key_create((pthread_key_t*)tls, destructor) == 0;
+#endif
+}
+
 bool sthread_tls_delete(sthread_tls_t *tls)
 {
 #ifdef USE_WIN32_THREADS
@@ -852,6 +864,35 @@ bool sthread_is_main_thread(void)
 #else
    /* No native predicate on this backend; current callers are Apple-only.
     * See the header note for the portable captured-id alternative. */
+   return false;
+#endif
+}
+
+/* pthread_cancel / pthread_setcancelstate are POSIX but not universally
+ * available: notably absent on Android/Bionic, and meaningless on the
+ * non-pthread backends. Enable only where the backend provides them. */
+#if !defined(USE_WIN32_THREADS) && !defined(GEKKO) && !defined(_3DS) && !defined(__ANDROID__)
+#define RTHREADS_HAVE_CANCEL 1
+#endif
+
+void sthread_set_cancel_enable(bool enable)
+{
+#ifdef RTHREADS_HAVE_CANCEL
+   pthread_setcancelstate(
+         enable ? PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE, NULL);
+#else
+   (void)enable;
+#endif
+}
+
+bool sthread_cancel(sthread_t *thread)
+{
+#ifdef RTHREADS_HAVE_CANCEL
+   if (thread)
+      return pthread_cancel(thread->id) == 0;
+   return false;
+#else
+   (void)thread;
    return false;
 #endif
 }
