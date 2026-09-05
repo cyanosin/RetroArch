@@ -5886,6 +5886,7 @@ QWidget *LatencyPage::widget()
    }
 
    layout->add(menu_setting_find_enum(MENU_ENUM_LABEL_VIDEO_MAX_SWAPCHAIN_IMAGES));
+   layout->add(menu_setting_find_enum(MENU_ENUM_LABEL_VIDEO_WAIT_FOR_PRESENT));
    layout->add(menu_setting_find_enum(MENU_ENUM_LABEL_VIDEO_WAITABLE_SWAPCHAINS));
    layout->add(menu_setting_find_enum(MENU_ENUM_LABEL_VIDEO_SCANLINE_SYNC));
    layout->add(menu_setting_find_enum(MENU_ENUM_LABEL_VIDEO_MAX_FRAME_LATENCY));
@@ -6896,6 +6897,7 @@ QWidget *VideoPage::widget()
    }
 
    syncGroup->add(MENU_ENUM_LABEL_VIDEO_MAX_SWAPCHAIN_IMAGES);
+   syncGroup->add(MENU_ENUM_LABEL_VIDEO_WAIT_FOR_PRESENT);
    syncGroup->add(MENU_ENUM_LABEL_VIDEO_WAITABLE_SWAPCHAINS);
    syncGroup->add(MENU_ENUM_LABEL_VIDEO_MAX_FRAME_LATENCY);
    syncGroup->add(MENU_ENUM_LABEL_VIDEO_SCANLINE_SYNC);

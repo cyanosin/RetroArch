@@ -52,6 +52,11 @@ S_UINT_H(video_max_swapchain_images, VIDEO_MAX_SWAPCHAIN_IMAGES,
       DEFAULT_MAX_SWAPCHAIN_IMAGES, SD_FLAG_CMD_APPLY_AUTO, SDESC_RANGE_MINMAX, CMD_EVENT_REINIT, MINIMUM_MAX_SWAPCHAIN_IMAGES, MAXIMUM_MAX_SWAPCHAIN_IMAGES, 1, MINIMUM_MAX_SWAPCHAIN_IMAGES, setting_action_ok_uint, NULL,
       "Max Swapchain Images",
       "Tells the video driver to explicitly use a specified buffering mode.")
+S_BOOL(video_wait_for_present, VIDEO_WAIT_FOR_PRESENT,
+      "video_wait_for_present",
+      DEFAULT_WAIT_FOR_PRESENT, SD_FLAG_CMD_APPLY_AUTO, SDESC_FLG_REFRESH, CMD_EVENT_REINIT,
+      "Wait For Present",
+      "Forces the CPU to wait for the previous frame to finish presenting. Compatibility is core-dependent.")
 S_BOOL(video_waitable_swapchains, VIDEO_WAITABLE_SWAPCHAINS,
       "video_waitable_swapchains",
       DEFAULT_WAITABLE_SWAPCHAINS, SD_FLAG_CMD_APPLY_AUTO, SDESC_FLG_REFRESH, CMD_EVENT_REINIT,

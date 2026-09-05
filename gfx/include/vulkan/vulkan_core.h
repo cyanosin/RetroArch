@@ -550,6 +550,13 @@ typedef enum VkStructureType {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES_EXT = 1000276000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT = 1000281000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES_EXT = 1000281001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_MODE_FIFO_LATEST_READY_FEATURES_KHR = 1000361000,
+    VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_ID_2_KHR = 1000479000,
+    VK_STRUCTURE_TYPE_PRESENT_ID_2_KHR = 1000479001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_2_FEATURES_KHR = 1000479002,
+    VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_WAIT_2_KHR = 1000480000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_2_FEATURES_KHR = 1000480001,
+    VK_STRUCTURE_TYPE_PRESENT_WAIT_2_INFO_KHR = 1000480002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -4872,9 +4879,10 @@ typedef enum VkPresentModeKHR {
     VK_PRESENT_MODE_FIFO_RELAXED_KHR = 3,
     VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR = 1000111000,
     VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR = 1000111001,
+    VK_PRESENT_MODE_FIFO_LATEST_READY_KHR = 1000361000,
     VK_PRESENT_MODE_BEGIN_RANGE_KHR = VK_PRESENT_MODE_IMMEDIATE_KHR,
-    VK_PRESENT_MODE_END_RANGE_KHR = VK_PRESENT_MODE_FIFO_RELAXED_KHR,
-    VK_PRESENT_MODE_RANGE_SIZE_KHR = (VK_PRESENT_MODE_FIFO_RELAXED_KHR - VK_PRESENT_MODE_IMMEDIATE_KHR + 1),
+    VK_PRESENT_MODE_END_RANGE_KHR = VK_PRESENT_MODE_FIFO_LATEST_READY_KHR,
+    VK_PRESENT_MODE_RANGE_SIZE_KHR = (VK_PRESENT_MODE_FIFO_LATEST_READY_KHR - VK_PRESENT_MODE_IMMEDIATE_KHR + 1),
     VK_PRESENT_MODE_MAX_ENUM_KHR = 0x7FFFFFFF
 } VkPresentModeKHR;
 
@@ -4964,6 +4972,8 @@ typedef enum VkSwapchainCreateFlagBitsKHR {
     VK_SWAPCHAIN_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT_KHR = 0x00000001,
     VK_SWAPCHAIN_CREATE_PROTECTED_BIT_KHR = 0x00000002,
     VK_SWAPCHAIN_CREATE_MUTABLE_FORMAT_BIT_KHR = 0x00000004,
+    VK_SWAPCHAIN_CREATE_PRESENT_ID_2_BIT_KHR = 0x00000040,
+    VK_SWAPCHAIN_CREATE_PRESENT_WAIT_2_BIT_KHR = 0x00000080,
     VK_SWAPCHAIN_CREATE_FLAG_BITS_MAX_ENUM_KHR = 0x7FFFFFFF
 } VkSwapchainCreateFlagBitsKHR;
 typedef VkFlags VkSwapchainCreateFlagsKHR;
@@ -5007,6 +5017,44 @@ typedef struct VkPresentInfoKHR {
     const uint32_t*          pImageIndices;
     VkResult*                pResults;
 } VkPresentInfoKHR;
+
+typedef struct VkPresentId2KHR {
+   VkStructureType    sType;
+   const void* pNext;
+   uint32_t           swapchainCount;
+   const uint64_t* pPresentIds;
+} VkPresentId2KHR;
+
+typedef struct VkPhysicalDevicePresentId2FeaturesKHR {
+   VkStructureType    sType;
+   void* pNext;
+   VkBool32           presentId2;
+} VkPhysicalDevicePresentId2FeaturesKHR;
+
+typedef struct VkSurfaceCapabilitiesPresentId2KHR {
+   VkStructureType    sType;
+   void* pNext;
+   VkBool32           presentId2Supported;
+} VkSurfaceCapabilitiesPresentId2KHR;
+
+typedef struct VkPresentWait2InfoKHR {
+   VkStructureType    sType;
+   const void* pNext;
+   uint64_t           presentId;
+   uint64_t           timeout;
+} VkPresentWait2InfoKHR;
+
+typedef struct VkPhysicalDevicePresentWait2FeaturesKHR {
+   VkStructureType    sType;
+   void* pNext;
+   VkBool32           presentWait2;
+} VkPhysicalDevicePresentWait2FeaturesKHR;
+
+typedef struct VkSurfaceCapabilitiesPresentWait2KHR {
+   VkStructureType    sType;
+   void* pNext;
+   VkBool32           presentWait2Supported;
+} VkSurfaceCapabilitiesPresentWait2KHR;
 
 typedef struct VkImageSwapchainCreateInfoKHR {
     VkStructureType    sType;
@@ -5057,6 +5105,7 @@ typedef void (VKAPI_PTR *PFN_vkDestroySwapchainKHR)(VkDevice device, VkSwapchain
 typedef VkResult (VKAPI_PTR *PFN_vkGetSwapchainImagesKHR)(VkDevice device, VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages);
 typedef VkResult (VKAPI_PTR *PFN_vkAcquireNextImageKHR)(VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence, uint32_t* pImageIndex);
 typedef VkResult (VKAPI_PTR *PFN_vkQueuePresentKHR)(VkQueue queue, const VkPresentInfoKHR* pPresentInfo);
+typedef VkResult (VKAPI_PTR *PFN_vkWaitForPresent2KHR)(VkDevice device, VkSwapchainKHR swapchain, const VkPresentWait2InfoKHR* pPresentWait2Info);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceGroupPresentCapabilitiesKHR)(VkDevice device, VkDeviceGroupPresentCapabilitiesKHR* pDeviceGroupPresentCapabilities);
 typedef VkResult (VKAPI_PTR *PFN_vkGetDeviceGroupSurfacePresentModesKHR)(VkDevice device, VkSurfaceKHR surface, VkDeviceGroupPresentModeFlagsKHR* pModes);
 typedef VkResult (VKAPI_PTR *PFN_vkGetPhysicalDevicePresentRectanglesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t* pRectCount, VkRect2D* pRects);

@@ -267,6 +267,8 @@ typedef struct gfx_ctx_vulkan_data
    uint8_t flags;
    enum vulkan_wsi_type wsi_type;
    bool fse_supported;
+   uint64_t current_present_id;
+   bool present_wait_supported;
    /* Set once VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT has
     * been acquired on the current swapchain, so it is released before
     * that swapchain is destroyed. */

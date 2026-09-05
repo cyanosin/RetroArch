@@ -550,6 +550,7 @@ typedef struct settings
       bool video_gl_direct_spirv;
       bool video_scanline_sync;
       bool video_hard_sync;
+      bool video_wait_for_present;
       bool video_waitable_swapchains;
       bool video_vfilter;
       bool video_smooth;
